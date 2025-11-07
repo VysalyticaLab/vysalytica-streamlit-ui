@@ -5,7 +5,7 @@ import streamlit as st
 st.set_page_config(page_title="Vysalytica QuickScan", page_icon="🔎", layout="centered")
 
 st.title("Vysalytica QuickScan 🔎")
-st.write("Paste a public URL. We’ll run an AI visibility QuickScan via our API and show key findings in ~10–30s.")
+st.write("Paste a public URL. We'll run an AI visibility QuickScan via our API and show key findings in ~10–30s.")
 
 # API base (Render) - as requested, defaults to your Render URL
 API_BASE = os.getenv("API_BASE", "https://vysalytica-api.onrender.com")
@@ -22,109 +22,71 @@ if submitted:
     else:
         with st.spinner("Running QuickScan..."):
             try:
-                # Try common endpoint patterns in order
                 headers = {"Content-Type": "application/json"}
-                payload = {"url": url, "email": email or None}
-
-                endpoints = [
-                    ("POST", f"{API_BASE}/api/quickscan"),
-                    ("POST", f"{API_BASE}/quickscan"),
-                    ("GET",  f"{API_BASE}/api/quickscan"),
-                    ("GET",  f"{API_BASE}/quickscan"),
-                ]
-
-                data = None
-                last_err = None
-                for method, ep in endpoints:
-                    try:
-                        if method == "POST":
-                            resp = requests.post(ep, json=payload, timeout=90, headers=headers)
-                        else:
-                            resp = requests.get(ep, params=payload, timeout=90)
-                        if resp.status_code == 200:
-                            # Ensure JSON
-                            data = resp.json()
-                            break
-                        else:
-                            last_err = f"{method} {ep} -> {resp.status_code} {resp.text[:200]}"
-                    except Exception as inner_e:
-                        last_err = f"{method} {ep} -> {inner_e}"
-
-                if data is None:
-                    raise RuntimeError(f"No working endpoint. Last error: {last_err}")
-
-                st.success("QuickScan complete!")
-
-                # Summary
-                st.subheader("Summary")
-                st.write(data.get("summary", "No summary returned."))
-
-                # Score
-                score = data.get("score")
-                if isinstance(score, (int, float)):
-                    st.metric("AI Visibility Score", f"{int(score)}/100")
-                elif score is not None:
-                    st.metric("AI Visibility Score", str(score))
-
-                # Issues
-                issues = data.get("issues", [])
-                if isinstance(issues, list) and issues:
-                    st.subheader("Top Issues")
-                    for i, issue in enumerate(issues[:5], start=1):
-                        title = (issue or {}).get("title", f"Issue {i}")
-                        with st.expander(f"{i}. {title}", expanded=False):
-                            impact = issue.get("impact") if isinstance(issue, dict) else None
-                            if impact:
-                                st.write(f"Impact: {impact}")
-                            desc = issue.get("description", "") if isinstance(issue, dict) else ""
-                            if desc:
-                                st.write(desc)
-                            fix = issue.get("fix_snippet") if isinstance(issue, dict) else None
-                            if fix:
-                                snippet = fix if isinstance(fix, str) else str(fix)
-                                st.code(snippet[:800] + ("..." if len(snippet) > 800 else ""), language="html")
-
-                # CTA / upsell
-                st.divider()
-                st.subheader("Upgrade for Full Report")
-                st.write(
-                    "Unlock full fixes, downloadable report, and automated tests.\n"
-                    "- One-off Full Report: $49\n"
-                    "- Agency Pilot (5 clients): $199/mo (white-label)\n"
+                payload = {
+                    "url": url,
+                    "plan": "quickscan"
+                }
+                resp = requests.post(
+                    f"{API_BASE}/api/audit",
+                    json=payload,
+                    timeout=90,
+                    headers=headers
                 )
-                if st.button("Get Full Report ($49)"):
-                    try:
-                        pay_endpoints = [
-                            ("POST", f"{API_BASE}/api/checkout/full_report"),
-                            ("POST", f"{API_BASE}/checkout/full_report"),
-                        ]
-                        link = None
-                        for m, pep in pay_endpoints:
-                            try:
-                                pay_resp = requests.post(
-                                    pep, json={"url": url, "email": email or None}, timeout=60
-                                )
-                                if pay_resp.status_code == 200:
-                                    j = {}
-                                    try:
-                                        j = pay_resp.json()
-                                    except Exception:
-                                        j = {}
-                                    link = j.get("checkout_url")
-                                    if link:
-                                        break
-                            except Exception:
-                                continue
-                        if link:
-                            st.markdown(f"[Complete purchase here]({link})")
-                        else:
-                            st.info("We’ll email you payment details shortly.")
-                    except Exception as e:
-                        st.error(f"Payment init failed: {e}")
+                if resp.status_code != 200:
+                    st.error(f"API error: {resp.status_code} {resp.text[:300]}")
+                else:
+                    data = resp.json()
+                    if not data.get("success"):
+                        st.error(f"Scan failed: {data.get('error', 'Unknown error')}")
+                    else:
+                        st.success("QuickScan complete!")
+                        result = data.get("data", {})
 
-                hint = data.get("upgrade_hint")
-                if hint:
-                    st.caption(hint)
+                        st.subheader("Summary")
+                        st.write(f"**URL:** {result.get('url')}")
+                        st.write(f"**Pages scanned:** {result.get('page_count')}")
+                        st.write(f"**Plan:** {result.get('plan')}")
+                        st.write(f"**Domain:** {result.get('domain')}")
 
+                        # Score
+                        scores = result.get("scores", {})
+                        if "overall" in scores:
+                            st.metric("AI Visibility Score", f"{int(scores['overall'])}/100")
+
+                        # Key findings
+                        findings = result.get("findings", [])
+                        if findings:
+                            st.subheader("Top Issues")
+                            for i, finding in enumerate(findings[:5], start=1):
+                                with st.expander(f"{i}. {finding.get('title', 'Issue')}", expanded=False):
+                                    st.write(f"**Status:** {finding.get('status', '')}")
+                                    st.write(f"**Category:** {finding.get('category', '')}")
+                                    why = finding.get("why", "")
+                                    if why:
+                                        st.write(f"**Why:** {why}")
+                                    fix_text = finding.get("fix", "")
+                                    if fix_text:
+                                        st.write(f"**Fix:** {fix_text}")
+                                    fix_snippet = finding.get("fix_snippet")
+                                    if fix_snippet:
+                                        st.code(fix_snippet[:800] + ("..." if len(fix_snippet) > 800 else ""), language="html")
+
+                        st.divider()
+                        st.subheader("Upgrade for Full Report")
+                        st.write(
+                            "Unlock full fixes, downloadable report, and automated tests.\n\n"
+                            "- **One-off Full Report:** $49\n"
+                            "- **Agency Pilot** (5 clients): $199/mo (white-label)\n"
+                        )
+                        
+                        # Optional: Add payment CTA button
+                        if st.button("Get Full Report ($49)"):
+                            st.info("Payment integration coming soon. We'll email you details at: " + (email if email else "your email"))
+
+            except requests.exceptions.Timeout:
+                st.error("The API request timed out. Please try again.")
+            except requests.exceptions.RequestException as e:
+                st.error(f"Network error: {e}")
             except Exception as e:
-                st.error(str(e))
+                st.error(f"Unexpected error: {e}")
