@@ -66,6 +66,8 @@ with tab1:
                                     st.write(f"**Fix:** {f.get('fix', '')}")
                                     if f.get('fix_snippet'):
                                         st.code(f['fix_snippet'][:500], language="html")
+                                    if f.get('evidence'):
+                                        st.write(f"**Evidence:** {f.get('evidence')}")
                         else:
                             st.error(data.get("error", "Unknown error"))
                     else:
