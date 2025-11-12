@@ -11,6 +11,43 @@ API_BASE = os.getenv("API_BASE", "https://vysalytica-api.onrender.com")
 st.title("🔎 Vysalytica - AI Visibility Platform")
 st.caption("Test all features for free")
 
+# CSS for blur overlay and "Coming Soon" message
+BLUR_OVERLAY_CSS = """
+<style>
+.blur-content {
+    filter: blur(8px);
+    pointer-events: none;
+    user-select: none;
+}
+.coming-soon-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 43, 70, 0.95);
+    padding: 60px 80px;
+    border-radius: 20px;
+    z-index: 9999;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 2px solid #6BC4FF;
+}
+.coming-soon-text {
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+    text-shadow: 0 2px 10px rgba(107, 196, 255, 0.5);
+}
+.coming-soon-subtext {
+    color: #6BC4FF;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 10px;
+}
+</style>
+"""
+
 # Create tabs
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "🔍 Audit Tool", 
@@ -22,7 +59,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 ])
 
 # ============================================
-# TAB 1: AUDIT TOOL
+# TAB 1: AUDIT TOOL (FULLY FUNCTIONAL - NO CHANGES)
 # ============================================
 with tab1:
     st.header("AI Visibility Audit")
@@ -76,9 +113,19 @@ with tab1:
                     st.error(f"Error: {e}")
 
 # ============================================
-# TAB 2: CITATION TRACKER
+# TAB 2: CITATION TRACKER (BLURRED WITH COMING SOON)
 # ============================================
 with tab2:
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
+    st.markdown("""
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">Citation Tracker launching soon</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
     st.header("AI Citation Tracker")
     st.write("Track how often your brand is cited by ChatGPT and Claude")
     
@@ -139,11 +186,23 @@ with tab2:
                         st.error(f"Error: {resp.status_code}")
                 except Exception as e:
                     st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-# TAB 3: ANSWER GRAPH
+# TAB 3: ANSWER GRAPH (BLURRED WITH COMING SOON)
 # ============================================
 with tab3:
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
+    st.markdown("""
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">Answer Graph launching soon</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
     st.header("Answer Graph Builder")
     st.write("Map how AI assistants answer key intents for your domain")
     
@@ -200,11 +259,23 @@ with tab3:
                         st.error(f"Error: {resp.status_code}")
                 except Exception as e:
                     st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-# TAB 4: PLAYBOOKS
+# TAB 4: PLAYBOOKS (BLURRED WITH COMING SOON)
 # ============================================
 with tab4:
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
+    st.markdown("""
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">Playbooks launching soon</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
     st.header("Playbook Generator")
     st.write("Generate actionable playbooks to improve AI visibility for specific intents")
     
@@ -240,7 +311,6 @@ with tab4:
                                     if fix.get('snippet'):
                                         st.code(fix['snippet'], language=fix.get('language', 'html'))
                             
-                            # Download options
                             st.subheader("Download Playbook")
                             col1, col2 = st.columns(2)
                             with col1:
@@ -265,11 +335,23 @@ with tab4:
                         st.error(f"Error: {resp.status_code}")
                 except Exception as e:
                     st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-# TAB 5: REPORTS & HISTORY
+# TAB 5: REPORTS & HISTORY (BLURRED WITH COMING SOON)
 # ============================================
 with tab5:
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
+    st.markdown("""
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">Reports & History launching soon</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
     st.header("Audit History & Reports")
     
     col1, col2 = st.columns(2)
@@ -322,11 +404,23 @@ with tab5:
                     st.error(f"Error: {resp.status_code}")
             except Exception as e:
                 st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-# TAB 6: API KEYS & PLANS
+# TAB 6: API KEYS & PLANS (BLURRED WITH COMING SOON)
 # ============================================
 with tab6:
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
+    st.markdown("""
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">API Keys & Plans launching soon</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
     st.header("API Keys & Plans")
     
     col1, col2 = st.columns(2)
@@ -407,3 +501,5 @@ with tab6:
                     st.error(f"Error: {resp.status_code}")
             except Exception as e:
                 st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
