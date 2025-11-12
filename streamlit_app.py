@@ -11,6 +11,43 @@ API_BASE = os.getenv("API_BASE", "https://vysalytica-api.onrender.com")
 st.title("🔎 Vysalytica - AI Visibility Platform")
 st.caption("Test all features for free")
 
+# CSS for blur overlay and "Coming Soon" message
+BLUR_OVERLAY_CSS = """
+<style>
+.blur-content {
+    filter: blur(8px);
+    pointer-events: none;
+    user-select: none;
+}
+.coming-soon-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 43, 70, 0.95);
+    padding: 60px 80px;
+    border-radius: 20px;
+    z-index: 9999;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 2px solid #6BC4FF;
+}
+.coming-soon-text {
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+    text-shadow: 0 2px 10px rgba(107, 196, 255, 0.5);
+}
+.coming-soon-subtext {
+    color: #6BC4FF;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 10px;
+}
+</style>
+"""
+
 # Create tabs
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "🔍 Audit Tool", 
@@ -76,61 +113,404 @@ with tab1:
                     st.error(f"Error: {e}")
 
 # ============================================
-# TAB 2: CITATION TRACKER (HIDDEN)
+# TAB 2: CITATION TRACKER (BLURRED WITH COMING SOON)
 # ============================================
 with tab2:
+    # Inject blur overlay CSS and "Coming Soon" message
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
     st.markdown("""
-        <style>
-        [data-testid="stVerticalBlock"] {
-            display: none !important;
-        }
-        </style>
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">Citation Tracker launching soon</p>
+        </div>
     """, unsafe_allow_html=True)
+    
+    # Original content wrapped in blur div
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
+    st.header("AI Citation Tracker")
+    st.write("Track how often your brand is cited by ChatGPT and Claude")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Track New Citations")
+        with st.form("citation_form"):
+            brand = st.text_input("Brand Name", placeholder="Asana")
+            intent = st.text_input("Search Intent", placeholder="best project management tools")
+            assistants = st.multiselect("AI Assistants", ["chatgpt", "claude"], default=["chatgpt", "claude"])
+            track_btn = st.form_submit_button("Track Citations")
+        
+        if track_btn:
+            if brand and intent:
+                with st.spinner("Querying AI assistants..."):
+                    try:
+                        payload = {"brand": brand, "intent": intent, "assistants": assistants}
+                        resp = requests.post(f"{API_BASE}/api/citations/track", json=payload, timeout=120)
+                        
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            if data.get("success"):
+                                results = data["data"]["results"]
+                                summary = data["data"]["summary"]
+                                
+                                st.success(f"Citation Rate: {summary['rate']}% ({summary['cited']}/{summary['total']})")
+                                
+                                for r in results:
+                                    cited = "✅ Cited" if r.get("cited") else "❌ Not Cited"
+                                    with st.expander(f"{r['assistant']} - {cited}"):
+                                        st.write(r.get("response", "")[:500])
+                            else:
+                                st.error(data.get("error"))
+                        else:
+                            st.error(f"Error: {resp.status_code}")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+    
+    with col2:
+        st.subheader("Citation Stats")
+        stats_brand = st.text_input("Brand Name (for stats)", placeholder="Asana")
+        if st.button("Get Stats"):
+            if stats_brand:
+                try:
+                    resp = requests.get(f"{API_BASE}/api/citations/stats", params={"brand": stats_brand}, timeout=30)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if data.get("success"):
+                            stats = data["data"]
+                            st.metric("Overall Citation Rate", f"{stats.get('overall_rate', 0)}%")
+                            st.metric("Total Queries", stats.get('total_queries', 0))
+                            st.write(f"**ChatGPT Rate:** {stats.get('chatgpt_rate', 0)}%")
+                            st.write(f"**Claude Rate:** {stats.get('claude_rate', 0)}%")
+                        else:
+                            st.error(data.get("error"))
+                    else:
+                        st.error(f"Error: {resp.status_code}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-# TAB 3: ANSWER GRAPH (HIDDEN)
+# TAB 3: ANSWER GRAPH (BLURRED WITH COMING SOON)
 # ============================================
 with tab3:
+    # Inject blur overlay CSS and "Coming Soon" message
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
     st.markdown("""
-        <style>
-        [data-testid="stVerticalBlock"] {
-            display: none !important;
-        }
-        </style>
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">Answer Graph launching soon</p>
+        </div>
     """, unsafe_allow_html=True)
+    
+    # Original content wrapped in blur div
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
+    st.header("Answer Graph Builder")
+    st.write("Map how AI assistants answer key intents for your domain")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Build Answer Graph")
+        with st.form("answer_graph_form"):
+            domain = st.text_input("Domain", placeholder="example.com")
+            intents_input = st.text_area("Intents (one per line)", placeholder="best project management\nproject management for teams")
+            ag_packs = st.multiselect("Packs", ["base", "ecomm", "docs"], default=["base"])
+            build_btn = st.form_submit_button("Build Graph")
+        
+        if build_btn:
+            if domain and intents_input:
+                intents = [i.strip() for i in intents_input.split("\n") if i.strip()]
+                with st.spinner("Building answer graph..."):
+                    try:
+                        payload = {"domain": domain, "intents": intents, "packs": ag_packs}
+                        resp = requests.post(f"{API_BASE}/api/answer_graph/build", json=payload, timeout=120)
+                        
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            if data.get("success"):
+                                result = data["data"]
+                                st.success("Answer graph built!")
+                                st.metric("Priority Score", result.get("priority_score", 0))
+                                st.json(result)
+                            else:
+                                st.error(data.get("error"))
+                        else:
+                            st.error(f"Error: {resp.status_code}")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+    
+    with col2:
+        st.subheader("View Answer Graphs")
+        view_domain = st.text_input("Domain (to view)", placeholder="example.com")
+        if st.button("Load Graphs"):
+            if view_domain:
+                try:
+                    resp = requests.get(f"{API_BASE}/api/answer_graph/", params={"domain": view_domain, "limit": 5}, timeout=30)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if data.get("success"):
+                            graphs = data["data"]
+                            st.write(f"Found {len(graphs)} graph(s)")
+                            for g in graphs:
+                                with st.expander(f"Graph {g.get('id')} - {g.get('created_at', '')}"):
+                                    st.json(g)
+                        else:
+                            st.error(data.get("error"))
+                    else:
+                        st.error(f"Error: {resp.status_code}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-# TAB 4: PLAYBOOKS (HIDDEN)
+# TAB 4: PLAYBOOKS (BLURRED WITH COMING SOON)
 # ============================================
 with tab4:
+    # Inject blur overlay CSS and "Coming Soon" message
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
     st.markdown("""
-        <style>
-        [data-testid="stVerticalBlock"] {
-            display: none !important;
-        }
-        </style>
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">Playbooks launching soon</p>
+        </div>
     """, unsafe_allow_html=True)
+    
+    # Original content wrapped in blur div
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
+    st.header("Playbook Generator")
+    st.write("Generate actionable playbooks to improve AI visibility for specific intents")
+    
+    with st.form("playbook_form"):
+        pb_domain = st.text_input("Domain", placeholder="example.com")
+        pb_intent = st.text_input("Intent", placeholder="best project management tools")
+        pb_assistant = st.selectbox("Target Assistant", ["chatgpt", "claude"])
+        pb_btn = st.form_submit_button("Generate Playbook")
+    
+    if pb_btn:
+        if pb_domain and pb_intent:
+            with st.spinner("Generating playbook..."):
+                try:
+                    payload = {"domain": pb_domain, "intent": pb_intent, "target_assistant": pb_assistant}
+                    resp = requests.post(f"{API_BASE}/api/playbooks/generate", json=payload, timeout=120)
+                    
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if data.get("success"):
+                            playbook = data["data"]
+                            st.success("Playbook generated!")
+                            
+                            st.subheader(f"Playbook: {playbook.get('intent', '')}")
+                            st.write(f"**Target:** {playbook.get('target_assistant', '')}")
+                            st.write(f"**Priority:** {playbook.get('priority', '')}")
+                            
+                            fixes = playbook.get("fixes", [])
+                            st.write(f"**{len(fixes)} Fixes:**")
+                            for i, fix in enumerate(fixes, 1):
+                                with st.expander(f"{i}. {fix.get('title', 'Fix')}"):
+                                    st.write(f"**Why:** {fix.get('why', '')}")
+                                    st.write(f"**Language:** {fix.get('language', '')}")
+                                    if fix.get('snippet'):
+                                        st.code(fix['snippet'], language=fix.get('language', 'html'))
+                            
+                            # Download options
+                            st.subheader("Download Playbook")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                if st.button("Download as Markdown"):
+                                    try:
+                                        dl_resp = requests.post(f"{API_BASE}/api/report/playbook_md", json={"playbook": playbook}, timeout=60)
+                                        if dl_resp.status_code == 200:
+                                            st.download_button("📥 Download MD", dl_resp.content, f"{pb_domain}_playbook.md", "text/markdown")
+                                    except Exception as e:
+                                        st.error(f"Download error: {e}")
+                            with col2:
+                                if st.button("Download as DOCX"):
+                                    try:
+                                        dl_resp = requests.post(f"{API_BASE}/api/report/playbook_docx", json={"playbook": playbook}, timeout=60)
+                                        if dl_resp.status_code == 200:
+                                            st.download_button("📥 Download DOCX", dl_resp.content, f"{pb_domain}_playbook.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                                    except Exception as e:
+                                        st.error(f"Download error: {e}")
+                        else:
+                            st.error(data.get("error"))
+                    else:
+                        st.error(f"Error: {resp.status_code}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-# TAB 5: REPORTS & HISTORY (HIDDEN)
+# TAB 5: REPORTS & HISTORY (BLURRED WITH COMING SOON)
 # ============================================
 with tab5:
+    # Inject blur overlay CSS and "Coming Soon" message
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
     st.markdown("""
-        <style>
-        [data-testid="stVerticalBlock"] {
-            display: none !important;
-        }
-        </style>
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">Reports & History launching soon</p>
+        </div>
     """, unsafe_allow_html=True)
+    
+    # Original content wrapped in blur div
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
+    st.header("Audit History & Reports")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Audit History")
+        history_domain = st.text_input("Filter by domain (optional)")
+        history_limit = st.slider("Limit", 1, 20, 10)
+        
+        if st.button("Load History"):
+            try:
+                params = {"limit": history_limit}
+                if history_domain:
+                    params["domain"] = history_domain
+                
+                resp = requests.get(f"{API_BASE}/api/audit/history", params=params, timeout=30)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("success"):
+                        audits = data["data"]
+                        st.write(f"Found {len(audits)} audit(s)")
+                        for audit in audits:
+                            with st.expander(f"Audit #{audit.get('id')} - {audit.get('domain')} - Score: {audit.get('overall_score')}"):
+                                st.write(f"**URL:** {audit.get('url')}")
+                                st.write(f"**Pages:** {audit.get('page_count')}")
+                                st.write(f"**Date:** {audit.get('created_at')}")
+                                st.write(f"**Packs:** {', '.join(audit.get('packs', []))}")
+                    else:
+                        st.error(data.get("error"))
+                else:
+                    st.error(f"Error: {resp.status_code}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+    
+    with col2:
+        st.subheader("Get Audit Details")
+        audit_id = st.number_input("Audit ID", min_value=1, step=1)
+        
+        if st.button("Load Audit"):
+            try:
+                resp = requests.get(f"{API_BASE}/api/audit/{audit_id}", timeout=30)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("success"):
+                        audit = data["data"]
+                        st.json(audit)
+                    else:
+                        st.error(data.get("error"))
+                else:
+                    st.error(f"Error: {resp.status_code}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
-# TAB 6: API KEYS & PLANS (HIDDEN)
+# TAB 6: API KEYS & PLANS (BLURRED WITH COMING SOON)
 # ============================================
 with tab6:
+    # Inject blur overlay CSS and "Coming Soon" message
+    st.markdown(BLUR_OVERLAY_CSS, unsafe_allow_html=True)
     st.markdown("""
-        <style>
-        [data-testid="stVerticalBlock"] {
-            display: none !important;
-        }
-        </style>
+        <div class="coming-soon-overlay">
+            <p class="coming-soon-text">Coming Soon</p>
+            <p class="coming-soon-subtext">API Keys & Plans launching soon</p>
+        </div>
     """, unsafe_allow_html=True)
+    
+    # Original content wrapped in blur div
+    st.markdown('<div class="blur-content">', unsafe_allow_html=True)
+    
+    st.header("API Keys & Plans")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Create API Key")
+        with st.form("api_key_form"):
+            key_name = st.text_input("Key Name (optional)", placeholder="My App Key")
+            quota = st.number_input("Quota per hour", min_value=1, max_value=1000, value=10)
+            create_key_btn = st.form_submit_button("Create Key")
+        
+        if create_key_btn:
+            try:
+                payload = {"name": key_name, "quota_per_hour": quota}
+                resp = requests.post(f"{API_BASE}/api/keys/create", json=payload, timeout=30)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("success"):
+                        key_data = data["data"]
+                        st.success("API Key created!")
+                        st.code(key_data.get("key"), language="text")
+                        st.caption("⚠️ Save this key - it won't be shown again")
+                    else:
+                        st.error(data.get("error"))
+                else:
+                    st.error(f"Error: {resp.status_code}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+        
+        st.subheader("List API Keys")
+        if st.button("Load Keys"):
+            try:
+                resp = requests.get(f"{API_BASE}/api/keys/list", timeout=30)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("success"):
+                        keys = data["data"]
+                        for key in keys:
+                            st.write(f"**{key.get('name', 'Unnamed')}** - {key.get('key')} - Active: {key.get('is_active')}")
+                    else:
+                        st.error(data.get("error"))
+                else:
+                    st.error(f"Error: {resp.status_code}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+    
+    with col2:
+        st.subheader("Available Plans")
+        if st.button("Load Plans"):
+            try:
+                resp = requests.get(f"{API_BASE}/api/plans", timeout=30)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("success"):
+                        plans = data["data"]
+                        for plan in plans:
+                            with st.expander(f"{plan.get('name')} - ${plan.get('price')}"):
+                                st.json(plan)
+                    else:
+                        st.error(data.get("error"))
+                else:
+                    st.error(f"Error: {resp.status_code}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+        
+        st.subheader("Compare Plans")
+        if st.button("Show Comparison"):
+            try:
+                resp = requests.get(f"{API_BASE}/api/plans/compare", timeout=30)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("success"):
+                        comparison = data["data"]
+                        st.json(comparison)
+                    else:
+                        st.error(data.get("error"))
+                else:
+                    st.error(f"Error: {resp.status_code}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
